@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ثباتي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #10201B;
+    --bg-elev: #17302A;
+    --bg-card: #1E3A32;
+    --line: rgba(232, 224, 210, 0.10);
+    --gold: #E08D6D;
+    --gold-soft: rgba(224,141,109,0.16);
+    --teal: #8FB996;
+    --text: #ECE7DC;
+    --text-dim: #8FA89B;
+    --green: #79B77D;
+    --radius-card: 18px;
+    --radius-chip: 12px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, rgba(224,141,109,0.08), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  .app{
+    width:100%;
+    max-width: 460px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding: 22px 18px 90px;
+    position:relative;
+  }
+  header.top{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    margin-bottom:22px;
+  }
+  .wordmark{
+    font-family:'Amiri', serif;
+    font-weight:700;
+    font-size:34px;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .datestr{
+    color: var(--text-dim);
+    font-size:13.5px;
+  }
+
+  .page{ display:none; flex-direction:column; gap:18px; animation: fade .35s ease; }
+  .page.active{ display:flex; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Note card */
+  .note-card{
+    background: linear-gradient(180deg, var(--gold-soft), rgba(217,168,87,0.03));
+    border: 1px solid rgba(217,168,87,0.35);
+    border-radius: var(--radius-card);
+    padding: 16px 16px 14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .note-card::before{
+    content:"";
+    position:absolute; inset:0 0 auto 0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity:.6;
+  }
+  .note-label{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; color: var(--gold); font-weight:600; margin-bottom:8px;
+  }
+  .note-text{
+    font-family:'Amiri', serif;
+    font-size:18px;
+    line-height:1.75;
+    color: var(--text);
+  }
+  .note-text.empty{ color: var(--text-dim); font-family:'IBM Plex Sans Arabic',sans-serif; font-size:14.5px; }
+
+  .section-title{
+    font-size:15px;
+    font-weight:600;
+    color: var(--text);
+    margin: 2px 2px 10px;
+  }
+
+  .list{ display:flex; flex-direction:column; gap:9px; }
+
+  .item-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-chip);
+    padding: 12px 14px;
+    cursor:pointer;
+    user-select:none;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .item-row.done{
+    border-color: rgba(116,180,134,0.55);
+    background: linear-gradient(180deg, rgba(116,180,134,0.14), rgba(116,180,134,0.03));
+  }
+  .item-icon{
+    width:38px; height:38px; min-width:38px;
+    border-radius: 11px;
+    display:flex; align-items:center; justify-content:center;
+    color:#10201B;
+  }
+  .item-icon svg{ width:19px; height:19px; }
+  .item-body{ flex:1; display:flex; flex-direction:column; }
+  .item-name{ font-size:14.5px; font-weight:600; }
+  .item-sub{ font-size:11.5px; color: var(--text-dim); margin-top:1px; }
+  .check{
+    width:24px; height:24px; border-radius:50%;
+    border:1.5px solid var(--text-dim);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: all .15s ease;
+  }
+  .item-row.done .check{
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check svg{ width:13px; height:13px; opacity:0; transition:opacity .12s; }
+  .item-row.done .check svg{ opacity:1; }
+
+  .progress-wrap{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: var(--radius-chip);
+    padding: 14px 16px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .progress-top{ display:flex; justify-content:space-between; font-size:13px; color: var(--text-dim); }
+  .progress-top b{ color: var(--text); font-weight:700; }
+  .bar-track{ height:8px; border-radius:99px; background: rgba(255,255,255,0.06); overflow:hidden; }
+  .bar-fill{ height:100%; background: linear-gradient(90deg, var(--teal), var(--gold)); border-radius:99px; transition: width .3s ease; }
+
+  .msg-card{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 14px 14px 12px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .msg-card textarea{
+    resize:none;
+    background: var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+    min-height:64px;
+    outline:none;
+  }
+  .msg-card textarea::placeholder{ color: var(--text-dim); }
+  .msg-actions{ display:flex; justify-content:flex-end; align-items:center; gap:10px; }
+  .saved-tag{ font-size:12px; color: var(--green); opacity:0; transition:opacity .2s; }
+  .saved-tag.show{ opacity:1; }
+  .btn{
+    background: var(--gold);
+    color:#221208;
+    border:none;
+    padding:9px 18px;
+    border-radius: 99px;
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-weight:700;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .btn:active{ transform: scale(.97); }
+
+  /* Tracking page */
+  .hero-streak{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding: 20px 10px 14px;
+  }
+  .flame-row{ display:flex; align-items:baseline; gap:8px; }
+  .flame-num{ font-family:'Amiri', serif; font-weight:700; font-size:52px; color: var(--gold); line-height:1; }
+  .flame-icon{ width:34px; height:34px; }
+  .level-tag{
+    margin-top:8px;
+    font-size:12.5px;
+    padding: 5px 14px;
+    border-radius:99px;
+    background: var(--gold-soft);
+    color: var(--gold);
+    border:1px solid rgba(217,168,87,0.4);
+  }
+  .level-hint{ font-size:12px; color: var(--text-dim); margin-top:6px; text-align:center; }
+
+  .streak-list{ display:flex; flex-direction:column; gap:8px; }
+  .streak-row{
+    display:flex; align-items:center; gap:12px;
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: var(--radius-chip);
+    padding: 10px 14px;
+  }
+  .streak-row .item-icon{ width:32px; height:32px; }
+  .streak-row .item-icon svg{ width:16px; height:16px; }
+  .streak-row .item-name{ font-size:13.5px; }
+  .streak-count{ display:flex; align-items:center; gap:5px; font-size:14px; font-weight:700; color: var(--gold); }
+  .streak-count svg{ width:14px; height:14px; }
+
+  .week-card{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 14px 12px;
+  }
+  .week-header{ display:flex; margin-bottom:8px; padding-inline-start:110px; justify-content:space-between; }
+  .week-header span{ font-size:11px; color: var(--text-dim); width:20px; text-align:center; }
+  .week-row{ display:flex; align-items:center; gap:6px; padding:5px 0; }
+  .week-row .wlabel{ width:104px; font-size:12px; color: var(--text-dim); flex-shrink:0; }
+  .week-dots{ flex:1; display:flex; justify-content:space-between; }
+  .wdot{ width:18px; height:18px; border-radius:6px; background: rgba(255,255,255,0.06); border:1px solid var(--line); }
+  .wdot.on{ background: var(--green); border-color: var(--green); }
+  .wdot.today{ box-shadow: 0 0 0 1.5px var(--gold); }
+
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; justify-content:center;
+  }
+  .tabbar-inner{
+    width:100%; max-width:460px;
+    display:flex;
+    background: rgba(22,34,59,0.92);
+    backdrop-filter: blur(10px);
+    border-top:1px solid var(--line);
+    padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+    gap:8px;
+  }
+  .tab-btn{
+    flex:1;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; color: var(--text-dim);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-size:12.5px; font-weight:600;
+    padding:6px 0; cursor:pointer;
+  }
+  .tab-btn svg{ width:20px; height:20px; }
+  .tab-btn.active{ color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="wordmark">ثباتي</div>
+    <div class="datestr" id="dateStr"></div>
+  </header>
+
+  <!-- صفحة اليوم -->
+  <section class="page active" id="page-today">
+
+    <div class="note-card">
+      <div class="note-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 4v5h5"/></svg>
+        رسالتك من الأمس
+      </div>
+      <div class="note-text" id="yesterdayMsg"></div>
+    </div>
+
+    <div>
+      <div class="section-title">الصلوات</div>
+      <div class="list" id="prayersList"></div>
+    </div>
+
+    <div>
+      <div class="section-title">عاداتي</div>
+      <div class="list" id="habitsList"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-top"><span>إنجاز اليوم</span><span><b id="progressText">0/8</b></span></div>
+      <div class="bar-track"><div class="bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="msg-card">
+      <div class="section-title" style="margin:0;">اترك رسالة لنفسك ليوم غد</div>
+      <textarea id="msgInput" placeholder="اكتب كلمة تحفّزك أو تذكيرًا تحتاجه غدًا..."></textarea>
+      <div class="msg-actions">
+        <span class="saved-tag" id="savedTag">تم الحفظ</span>
+        <button class="btn" id="saveMsgBtn">احفظ الرسالة</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- صفحة المتابعة -->
+  <section class="page" id="page-track">
+
+    <div class="hero-streak">
+      <div class="flame-row">
+        <svg class="flame-icon" viewBox="0 0 24 24" fill="none" stroke="#D9A857" stroke-width="1.6"><path d="M12 2s-6 6.5-6 11.5A6 6 0 0 0 18 13.5C18 10 15 8 14.5 5c-.8 2-2 3-2 3S13 5 12 2Z"/></svg>
+        <span class="flame-num" id="overallStreak">0</span>
+      </div>
+      <div class="level-tag" id="levelTag">البداية</div>
+      <div class="level-hint" id="levelHint"></div>
+    </div>
+
+    <div>
+      <div class="section-title">سلاسل عاداتي</div>
+      <div class="streak-list" id="streakList"></div>
+    </div>
+
+    <div class="week-card">
+      <div class="section-title" style="margin-bottom:12px;">آخر ٧ أيام</div>
+      <div class="week-header" id="weekHeader"></div>
+      <div id="weekBody"></div>
+    </div>
+
+  </section>
+
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab-btn active" data-page="today">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        اليوم
+      </button>
+      <button class="tab-btn" data-page="track">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>
+        المتابعة
+      </button>
+    </div>
+  </nav>
+
+</div>
+
+<script>
+const ICONS = {
+  fajr:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v3M4.2 11H2M22 11h-2.2M5 19h14M7 19a5 5 0 0 1 10 0M5.6 6.6l1.4 1.4M18.4 6.6 17 8"/></svg>',
+  duha:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="15" r="3.4"/><path d="M12 5.5v2.2M6.3 9l1.5 1.3M17.7 9l-1.5 1.3M3.5 15.5h2M18.5 15.5h2M4 20h16"/></svg>',
+  dhuhr:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2 12h2.2M19.8 12H22M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5"/></svg>',
+  asr:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="14" r="3.6"/><path d="M12 3v2.4M4.9 8.3l1.5 1.4M2 14h2.4M19.6 14H22M17.6 9.7l1.5-1.4M5 20h14"/></svg>',
+  maghrib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v6M8 6l4 4 4-4"/><circle cx="12" cy="14" r="3"/><path d="M4 19h16M3 14.5h2M19 14.5h2"/></svg>',
+  isha:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.7 6.7 0 0 0 10.5 10.5Z"/></svg>',
+  food:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c4-2.5 7-6 7-10.5A5.5 5.5 0 0 0 12 5a5.5 5.5 0 0 0-7 5.5C5 15 8 18.5 12 21Z"/><path d="M12 5c0-1.5.8-2.5 2-3"/></svg>',
+  exercise:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 6.5 4 4M17.5 17.5 20 20M4 20l6-6M14 10l6-6M9 15l-2 2M15 9l2-2M8 8l8 8"/></svg>',
+  teeth:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3c-2.5 0-4 2-4 5 0 4 1.2 8 2.3 10.4.6 1.3 2.4 1.2 2.9-.2L10 14c.3-.9 1.7-.9 2 0l.8 4.2c.5 1.4 2.3 1.5 2.9.2C16.8 16 18 12 18 8c0-3-1.5-5-4-5-1 0-1.6.4-2 1-.4-.6-1-1-2-1Z"/></svg>',
+};
+
+const CHIP_BG = {
+  fajr:'#5C7CB8', duha:'#D6A85E', dhuhr:'#D9A857', asr:'#C98A4E', maghrib:'#C1613F', isha:'#3E4E85',
+  food:'#6FA96E', exercise:'#4FA9A6', teeth:'#7FB6C9'
+};
+
+const PRAYERS = [
+  {key:'fajr', name:'الفجر', sub:'صلاة الصبح'},
+  {key:'duha', name:'الضحى', sub:'صلاة الضحى'},
+  {key:'dhuhr', name:'الظهر', sub:'صلاة الظهيرة'},
+  {key:'asr', name:'العصر', sub:'صلاة العصر'},
+  {key:'maghrib', name:'المغرب', sub:'صلاة الغروب'},
+  {key:'isha', name:'العشاء', sub:'صلاة الليل'},
+];
+const HABITS = [
+  {key:'food', name:'الأكل الصحي', sub:'وجبات متوازنة اليوم'},
+  {key:'exercise', name:'الرياضة', sub:'تحرك جسمك قليلًا'},
+  {key:'teeth', name:'تفريش الأسنان', sub:'مرتين على الأقل'},
+];
+const ALL_ITEMS = [...PRAYERS.map(p=>({...p,cat:'prayers'})), ...HABITS.map(h=>({...h,cat:'habits'}))];
+const WEEKDAYS = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+
+let state = { days: {} };
+const STORAGE_KEY = 'thabati-days';
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+function keyOf(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function addDays(d, n){ const c = new Date(d); c.setDate(c.getDate()+n); return c; }
+
+const today = new Date();
+const todayKey = keyOf(today);
+const yesterdayKey = keyOf(addDays(today,-1));
+
+function ensureDay(key){
+  if(!state.days[key]){
+    state.days[key] = { prayers:{fajr:false,duha:false,dhuhr:false,asr:false,maghrib:false,isha:false},
+                         habits:{food:false,exercise:false,teeth:false}, message:'' };
+  }
+  return state.days[key];
+}
+function getVal(key, cat, item){
+  return !!(state.days[key] && state.days[key][cat] && state.days[key][cat][item]);
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){ state = JSON.parse(res.value); }
+  }catch(e){ /* لا توجد بيانات محفوظة بعد */ }
+}
+async function persist(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  catch(e){ console.error('storage error', e); }
+}
+
+function itemRow(item, cat){
+  const div = document.createElement('div');
+  const isDone = getVal(todayKey, cat, item.key);
+  div.className = 'item-row' + (isDone ? ' done' : '');
+  div.innerHTML = `
+    <div class="item-icon" style="background:${CHIP_BG[item.key]}">${ICONS[item.key]}</div>
+    <div class="item-body">
+      <div class="item-name">${item.name}</div>
+      <div class="item-sub">${item.sub}</div>
+    </div>
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#10201B" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+  `;
+  div.addEventListener('click', ()=>{
+    const day = ensureDay(todayKey);
+    day[cat][item.key] = !day[cat][item.key];
+    persist();
+    renderToday();
+  });
+  return div;
+}
+
+function renderToday(){
+  document.getElementById('dateStr').textContent = today.toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const yMsg = state.days[yesterdayKey]?.message?.trim();
+  const msgEl = document.getElementById('yesterdayMsg');
+  if(yMsg){
+    msgEl.textContent = `"${yMsg}"`;
+    msgEl.classList.remove('empty');
+  } else {
+    msgEl.textContent = 'لم تترك لنفسك رسالة بالأمس. اكتب واحدة اليوم لتجدها غدًا.';
+    msgEl.classList.add('empty');
+  }
+
+  const pList = document.getElementById('prayersList');
+  pList.innerHTML=''; PRAYERS.forEach(p=>pList.appendChild(itemRow(p,'prayers')));
+  const hList = document.getElementById('habitsList');
+  hList.innerHTML=''; HABITS.forEach(h=>hList.appendChild(itemRow(h,'habits')));
+
+  const doneCount = ALL_ITEMS.filter(it=>getVal(todayKey,it.cat,it.key)).length;
+  document.getElementById('progressText').textContent = `${doneCount}/${ALL_ITEMS.length}`;
+  document.getElementById('progressBar').style.width = `${(doneCount/ALL_ITEMS.length)*100}%`;
+
+  const msgInput = document.getElementById('msgInput');
+  if(document.activeElement !== msgInput){
+    msgInput.value = state.days[todayKey]?.message || '';
+  }
+}
+
+document.getElementById('saveMsgBtn').addEventListener('click', ()=>{
+  const day = ensureDay(todayKey);
+  day.message = document.getElementById('msgInput').value.trim();
+  persist();
+  const tag = document.getElementById('savedTag');
+  tag.classList.add('show');
+  setTimeout(()=>tag.classList.remove('show'), 1600);
+});
+
+function dayComplete(key){
+  return ALL_ITEMS.every(it=>getVal(key,it.cat,it.key));
+}
+function streakFor(cat, itemKey){
+  let count=0;
+  let d = new Date(today);
+  const todayDone = getVal(keyOf(d), cat, itemKey);
+  if(!todayDone) d = addDays(d,-1);
+  while(true){
+    const k = keyOf(d);
+    if(getVal(k, cat, itemKey)){ count++; d = addDays(d,-1); } else break;
+  }
+  return count;
+}
+function overallStreak(){
+  let count=0;
+  let d = new Date(today);
+  if(!dayComplete(keyOf(d))) d = addDays(d,-1);
+  while(true){
+    const k = keyOf(d);
+    if(dayComplete(k)){ count++; d = addDays(d,-1); } else break;
+  }
+  return count;
+}
+function levelFor(streak){
+  if(streak >= 30) return {tag:'الثبات الراسخ', hint:'٣٠ يومًا فأكثر — تمكّنت من عاداتك'};
+  if(streak >= 14) return {tag:'الرسوخ', hint:'أسبوعان فأكثر من المواظبة المستمرة'};
+  if(streak >= 7)  return {tag:'الثبات', hint:'أسبوع كامل — استمر على هذا المنوال'};
+  if(streak >= 3)  return {tag:'المواظبة', hint:'بدأت تبني عادة حقيقية'};
+  if(streak >= 1)  return {tag:'أول خطوة', hint:'كل ثبات يبدأ بيوم واحد'};
+  return {tag:'البداية', hint:'أكمل يومك الأول لتبدأ سلسلتك'};
+}
+
+const FIRE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2s-6 6.5-6 11.5A6 6 0 0 0 18 13.5C18 10 15 8 14.5 5c-.8 2-2 3-2 3S13 5 12 2Z"/></svg>';
+
+function renderTrack(){
+  const os = overallStreak();
+  document.getElementById('overallStreak').textContent = os;
+  const lvl = levelFor(os);
+  document.getElementById('levelTag').textContent = lvl.tag;
+  document.getElementById('levelHint').textContent = lvl.hint;
+
+  const list = document.getElementById('streakList');
+  list.innerHTML = '';
+  ALL_ITEMS.forEach(it=>{
+    const s = streakFor(it.cat, it.key);
+    const row = document.createElement('div');
+    row.className = 'streak-row';
+    row.innerHTML = `
+      <div class="item-icon" style="background:${CHIP_BG[it.key]}">${ICONS[it.key]}</div>
+      <div class="item-body"><div class="item-name">${it.name}</div></div>
+      <div class="streak-count">${s} ${FIRE_SVG}</div>
+    `;
+    list.appendChild(row);
+  });
+
+  const header = document.getElementById('weekHeader');
+  header.innerHTML = '';
+  const days7 = [];
+  for(let i=6;i>=0;i--) days7.push(addDays(today,-i));
+  days7.forEach(d=>{
+    const s = document.createElement('span');
+    s.textContent = WEEKDAYS[d.getDay()].slice(0,2);
+    header.appendChild(s);
+  });
+
+  const body = document.getElementById('weekBody');
+  body.innerHTML = '';
+  ALL_ITEMS.forEach(it=>{
+    const row = document.createElement('div');
+    row.className = 'week-row';
+    const label = document.createElement('div');
+    label.className = 'wlabel';
+    label.textContent = it.name;
+    row.appendChild(label);
+    const dots = document.createElement('div');
+    dots.className = 'week-dots';
+    days7.forEach(d=>{
+      const dot = document.createElement('div');
+      const k = keyOf(d);
+      dot.className = 'wdot' + (getVal(k,it.cat,it.key) ? ' on' : '') + (k===todayKey ? ' today' : '');
+      dots.appendChild(dot);
+    });
+    row.appendChild(dots);
+    body.appendChild(row);
+  });
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+target).classList.add('active');
+    if(target === 'track') renderTrack();
+  });
+});
+
+(async function init(){
+  await loadState();
+  renderToday();
+  renderTrack();
+})();
+</script>
+</body>
+</html>
