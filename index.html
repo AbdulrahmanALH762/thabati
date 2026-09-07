@@ -263,12 +263,80 @@
   }
   .tab-btn svg{ width:20px; height:20px; }
   .tab-btn.active{ color: var(--gold); }
+
+  /* Auth gate */
+  .auth-gate{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:22px; padding-bottom:60px; }
+  .auth-card{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 20px 18px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .auth-tabs{ display:flex; background: var(--bg-elev); border-radius: 99px; padding:4px; margin-bottom:4px; }
+  .auth-tab{
+    flex:1; text-align:center; padding:8px 0; border:none; background:none; cursor:pointer;
+    color: var(--text-dim); font-family:'IBM Plex Sans Arabic', sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:99px;
+  }
+  .auth-tab.active{ background: var(--gold); color:#221208; }
+  .auth-card input{
+    background: var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius: 12px;
+    color: var(--text);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-size:14px;
+    padding:11px 12px;
+    outline:none;
+    direction:ltr;
+    text-align:right;
+  }
+  .auth-card input::placeholder{ color: var(--text-dim); }
+  .auth-error{ font-size:12.5px; color:#E08D6D; min-height:16px; }
+  .auth-hint{ font-size:12px; color: var(--text-dim); text-align:center; }
+  .config-warning{
+    background: rgba(224,141,109,0.14);
+    border:1px solid rgba(224,141,109,0.4);
+    border-radius: var(--radius-chip);
+    padding: 12px 14px;
+    font-size:12.5px;
+    line-height:1.7;
+    color: var(--text);
+  }
+  .logout-btn{
+    position:absolute; inset-inline-end:0; top:0;
+    background:none; border:none; color: var(--text-dim);
+    font-family:'IBM Plex Sans Arabic', sans-serif; font-size:12px; cursor:pointer;
+    padding:6px 4px;
+  }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <header class="top">
+  <div id="authGate" class="auth-gate">
+    <div class="wordmark" style="text-align:center;">ثباتي</div>
+    <div id="configWarning" class="config-warning" style="display:none;">
+      لم يتم إعداد Firebase بعد. افتح ملف index.html وضع بيانات مشروعك (firebaseConfig) في أعلى الكود لتفعيل تسجيل الدخول وحفظ البيانات.
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-mode="login">تسجيل الدخول</button>
+        <button type="button" class="auth-tab" data-mode="signup">إنشاء حساب</button>
+      </div>
+      <input type="email" id="authEmail" placeholder="البريد الإلكتروني" autocomplete="email" />
+      <input type="password" id="authPassword" placeholder="كلمة المرور" autocomplete="current-password" />
+      <div class="auth-error" id="authError"></div>
+      <button class="btn" id="authSubmitBtn" style="width:100%;">تسجيل الدخول</button>
+      <div class="auth-hint">بياناتك تُحفظ في حسابك وتُزامَن عبر أجهزتك.</div>
+    </div>
+  </div>
+
+  <div id="appContent" style="display:none;">
+
+  <header class="top" style="position:relative;">
+    <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
     <div class="wordmark">ثباتي</div>
     <div class="datestr" id="dateStr"></div>
   </header>
@@ -347,9 +415,34 @@
     </div>
   </nav>
 
+  </div>
+
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// ضع هنا بيانات مشروعك من Firebase Console:
+// Project settings > General > Your apps > SDK setup and configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+
+const firebaseApp = isConfigured ? initializeApp(firebaseConfig) : null;
+const auth = isConfigured ? getAuth(firebaseApp) : null;
+const db = isConfigured ? getFirestore(firebaseApp) : null;
+
 const ICONS = {
   fajr:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v3M4.2 11H2M22 11h-2.2M5 19h14M7 19a5 5 0 0 1 10 0M5.6 6.6l1.4 1.4M18.4 6.6 17 8"/></svg>',
   duha:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="15" r="3.4"/><path d="M12 5.5v2.2M6.3 9l1.5 1.3M17.7 9l-1.5 1.3M3.5 15.5h2M18.5 15.5h2M4 20h16"/></svg>',
@@ -405,15 +498,27 @@ function getVal(key, cat, item){
   return !!(state.days[key] && state.days[key][cat] && state.days[key][cat][item]);
 }
 
+let currentUser = null;
+
+function userDocRef(uid){ return doc(db, 'users', uid); }
+
 async function loadState(){
+  if(!currentUser) return;
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    if(res && res.value){ state = JSON.parse(res.value); }
-  }catch(e){ /* لا توجد بيانات محفوظة بعد */ }
+    const snap = await getDoc(userDocRef(currentUser.uid));
+    if(snap.exists()){
+      state = snap.data() || { days:{} };
+      if(!state.days) state.days = {};
+    } else {
+      state = { days:{} };
+      await setDoc(userDocRef(currentUser.uid), state);
+    }
+  }catch(e){ console.error('firestore load error', e); state = { days:{} }; }
 }
 async function persist(){
-  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
-  catch(e){ console.error('storage error', e); }
+  if(!currentUser) return;
+  try{ await setDoc(userDocRef(currentUser.uid), state); }
+  catch(e){ console.error('firestore save error', e); }
 }
 
 function itemRow(item, cat){
@@ -573,10 +678,77 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
-(async function init(){
-  await loadState();
-  renderToday();
-  renderTrack();
+function showApp(){
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appContent').style.display = '';
+}
+function showAuthGate(){
+  document.getElementById('appContent').style.display = 'none';
+  document.getElementById('authGate').style.display = 'flex';
+}
+
+const AUTH_ERROR_MESSAGES = {
+  'auth/invalid-email': 'البريد الإلكتروني غير صالح',
+  'auth/user-not-found': 'لم يتم العثور على حساب بهذا البريد',
+  'auth/wrong-password': 'كلمة المرور غير صحيحة',
+  'auth/invalid-credential': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+  'auth/email-already-in-use': 'هذا البريد مستخدم بالفعل',
+  'auth/weak-password': 'كلمة المرور ضعيفة جدًا (6 أحرف على الأقل)',
+};
+function authErrorText(err){
+  return AUTH_ERROR_MESSAGES[err.code] || 'حدث خطأ، حاول مرة أخرى';
+}
+
+let authMode = 'login';
+document.querySelectorAll('.auth-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    authMode = tab.dataset.mode;
+    document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب';
+    document.getElementById('authError').textContent = '';
+  });
+});
+
+document.getElementById('authSubmitBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  if(!isConfigured){
+    errEl.textContent = 'لم يتم إعداد Firebase بعد.';
+    return;
+  }
+  try{
+    if(authMode === 'login'){
+      await signInWithEmailAndPassword(auth, email, password);
+    } else {
+      await createUserWithEmailAndPassword(auth, email, password);
+    }
+  }catch(e){ errEl.textContent = authErrorText(e); }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  if(auth) signOut(auth);
+});
+
+(function init(){
+  if(!isConfigured){
+    document.getElementById('configWarning').style.display = 'block';
+    showAuthGate();
+    return;
+  }
+  onAuthStateChanged(auth, async (user)=>{
+    currentUser = user;
+    if(user){
+      showApp();
+      await loadState();
+      renderToday();
+      renderTrack();
+    } else {
+      showAuthGate();
+    }
+  });
 })();
 </script>
 </body>
