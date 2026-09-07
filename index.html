@@ -455,12 +455,13 @@ const ICONS = {
   food:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c4-2.5 7-6 7-10.5A5.5 5.5 0 0 0 12 5a5.5 5.5 0 0 0-7 5.5C5 15 8 18.5 12 21Z"/><path d="M12 5c0-1.5.8-2.5 2-3"/></svg>',
   exercise:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 6.5 4 4M17.5 17.5 20 20M4 20l6-6M14 10l6-6M9 15l-2 2M15 9l2-2M8 8l8 8"/></svg>',
   teeth:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3c-2.5 0-4 2-4 5 0 4 1.2 8 2.3 10.4.6 1.3 2.4 1.2 2.9-.2L10 14c.3-.9 1.7-.9 2 0l.8 4.2c.5 1.4 2.3 1.5 2.9.2C16.8 16 18 12 18 8c0-3-1.5-5-4-5-1 0-1.6.4-2 1-.4-.6-1-1-2-1Z"/></svg>',
+  siwak:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19 17 7"/><path d="M17 7c1-1 3-1 4 0M17 7c-1 1-1 3 0 4M15 5c1-1 3-1 4 0"/></svg>',
 };
 
 const CHIP_BG = {
   fajr:'#5C7CB8', duha:'#D6A85E', dhuhr:'#D9A857', asr:'#C98A4E', maghrib:'#C1613F', isha:'#3E4E85',
   rawatib:'#5FA88A', witr:'#7A5FB8',
-  food:'#6FA96E', exercise:'#4FA9A6', teeth:'#7FB6C9'
+  food:'#6FA96E', exercise:'#4FA9A6', teeth:'#7FB6C9', siwak:'#8AA560'
 };
 
 const PRAYERS = [
@@ -477,6 +478,7 @@ const HABITS = [
   {key:'food', name:'الأكل الصحي', sub:'وجبات متوازنة اليوم'},
   {key:'exercise', name:'الرياضة', sub:'تحرك جسمك قليلًا'},
   {key:'teeth', name:'تفريش الأسنان', sub:'مرتين على الأقل'},
+  {key:'siwak', name:'السواك', sub:'سنّة عند كل وضوء وصلاة'},
 ];
 const ALL_ITEMS = [...PRAYERS.map(p=>({...p,cat:'prayers'})), ...HABITS.map(h=>({...h,cat:'habits'}))];
 const WEEKDAYS = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
@@ -495,7 +497,7 @@ const yesterdayKey = keyOf(addDays(today,-1));
 function ensureDay(key){
   if(!state.days[key]){
     state.days[key] = { prayers:{fajr:false,duha:false,dhuhr:false,asr:false,maghrib:false,isha:false,rawatib:false,witr:false},
-                         habits:{food:false,exercise:false,teeth:false}, message:'' };
+                         habits:{food:false,exercise:false,teeth:false,siwak:false}, message:'' };
   }
   return state.days[key];
 }
